@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../core/alarms.dart';
 import '../core/i18n.dart';
+import '../core/power.dart';
 
 String _hm(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
@@ -28,12 +29,16 @@ class AlarmsScreen extends StatefulWidget {
 class _AlarmsScreenState extends State<AlarmsScreen> {
   Timer? _tick;
   bool? _allowed;
+  bool _batteryOk = true;
 
   @override
   void initState() {
     super.initState();
     Alarms.askPermission().then((ok) {
       if (mounted) setState(() => _allowed = ok);
+    });
+    Power.isIgnoringBattery().then((ok) {
+      if (mounted) setState(() => _batteryOk = ok);
     });
     // Refresco cada 30 s (no cada segundo: ahorra batería).
     _tick = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -256,6 +261,34 @@ class _AlarmsScreenState extends State<AlarmsScreen> {
                 trailing: TextButton(
                     onPressed: () => Alarms.askPermission().then((ok) => setState(() => _allowed = ok)),
                     child: Text(tr('Permitir', 'Allow', 'Permitir'))),
+              ),
+            ),
+          if (!_batteryOk)
+            Card(
+              color: Colors.orange.withValues(alpha: 0.15),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                      tr('El sistema puede apagar las alarmas para ahorrar batería (pasa mucho en Xiaomi/Redmi).',
+                          'The system may kill alarms to save battery (very common on Xiaomi/Redmi).',
+                          'O sistema pode desligar os alarmes para economizar bateria (comum em Xiaomi/Redmi).'),
+                      style: const TextStyle(color: Colors.orange)),
+                  Wrap(spacing: 8, children: [
+                    TextButton(
+                      onPressed: () async {
+                        await Power.openBatterySettings();
+                        final ok = await Power.isIgnoringBattery();
+                        if (mounted) setState(() => _batteryOk = ok);
+                      },
+                      child: Text(tr('Sin restricciones de batería', 'No battery restrictions', 'Sem restrições de bateria')),
+                    ),
+                    TextButton(
+                      onPressed: Power.openAutostart,
+                      child: Text(tr('Permitir inicio automático', 'Allow autostart', 'Permitir início automático')),
+                    ),
+                  ]),
+                ]),
               ),
             ),
           const SizedBox(height: 8),

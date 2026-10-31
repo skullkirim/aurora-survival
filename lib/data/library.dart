@@ -16,7 +16,13 @@ import 'en/c_safety_en.dart';
 import 'en/c_nav_en.dart';
 import 'en/c_rebuild_en.dart';
 import 'models.dart';
-import 'pt/content_pt.dart';
+import 'pt/c_basics_pt.dart';
+import 'pt/c_extra_pt.dart';
+import 'pt/c_food_pt.dart';
+import 'pt/c_health_pt.dart';
+import 'pt/c_nav_pt.dart';
+import 'pt/c_new_pt.dart';
+import 'pt/c_rebuild_pt.dart';
 
 export 'models.dart';
 
@@ -63,20 +69,25 @@ const List<Category> libraryEn = [
 /// Temas en el idioma actual.
 List<Category> get library => isEn ? libraryEn : (isPt ? libraryPt : libraryEs);
 
-List<Category>? _libraryPt;
-
-/// Portugués: nombres de los temas traducidos; las lecciones siguen en español.
-List<Category> get libraryPt => _libraryPt ??= [
-      for (final c in libraryEs)
-        Category(
-          id: c.id,
-          name: catPt[c.id]?.$1 ?? c.name,
-          icon: c.icon,
-          summary: catPt[c.id]?.$2 ?? c.summary,
-          articles: c.articles,
-          quiz: c.quiz,
-        ),
-    ];
+const List<Category> libraryPt = [
+  auxiliosPt,
+  aguaPt,
+  fuegoPt,
+  refugioPt,
+  comidaPt,
+  plantasPt,
+  medicinaNaturalPt,
+  higienePt,
+  orientacionPt,
+  nudosPt,
+  desastresPt,
+  seguridadPt,
+  radiacionPt,
+  animalesPt,
+  comunicacionPt,
+  reconstruirPt,
+  mentePt,
+];
 
 Map<String, (Category, Article)>? _idxEs, _idxEn, _idxPt;
 

@@ -9,6 +9,7 @@ import '../core/i18n.dart';
 
 import '../core/torch.dart';
 import 'alarms_screen.dart';
+import 'beacon_screen.dart';
 import 'community_screen.dart';
 import 'extra_tools.dart';
 import 'inventory_screen.dart';
@@ -32,6 +33,8 @@ List<(String, List<ToolItem>)> get toolGroups => [
   (tr('Pedir ayuda y señales', 'Call for help and signals'), [
     ToolItem(Icons.sos, tr('SOS rápido', 'Quick SOS'), tr('Pide auxilio con la linterna en un toque', 'Call for help with the flashlight in one tap'),
         () => const MorseFlashScreen(initial: 'SOS')),
+    ToolItem(Icons.notification_important, tr('Baliza SOS', 'SOS beacon', 'Baliza SOS'),
+        tr('Repite SOS solo cada cierto tiempo', 'Repeats SOS by itself every few minutes', 'Repete SOS sozinho de tempos em tempos'), () => const BeaconScreen()),
     ToolItem(Icons.campaign, tr('Silbato', 'Whistle'), tr('Sonido agudo muy fuerte o SOS sonoro', 'Very loud high-pitched sound or sound SOS'), () => const WhistleScreen()),
     ToolItem(Icons.graphic_eq, tr('Código Morse', 'Morse code'), tr('Escribe una palabra y envíala con luz o sonido', 'Type a word and send it with light or sound'),
         () => const MorseFlashScreen(initial: '')),

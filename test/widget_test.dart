@@ -117,6 +117,13 @@ void main() {
     for (final c in libraryEs) {
       expect(catPt.containsKey(c.id), isTrue, reason: c.id);
     }
+    expect([for (final c in libraryPt) c.id], [for (final c in libraryEs) c.id]);
+    for (var i = 0; i < libraryEs.length; i++) {
+      expect([for (final a in libraryPt[i].articles) a.id], [for (final a in libraryEs[i].articles) a.id], reason: libraryEs[i].id);
+      for (final q in libraryPt[i].quiz) {
+        expect(q.answer, lessThan(q.options.length));
+      }
+    }
     lang.value = 'pt';
     expect(tr('Inicio', 'Home'), 'Início');
     expect(tr('xyz', 'xyz-en'), 'xyz');

@@ -54,7 +54,43 @@ class Community {
         'time': DateTime.now().millisecondsSinceEpoch,
         'inventory': Store.jsonList('inventory'),
         'people': Store.jsonList('people'),
+        'chat': chat.length > 200 ? chat.sublist(chat.length - 200) : chat,
       };
+
+  /// Mensajes del grupo (se reenvían entre teléfonos: cada uno guarda todos).
+  static List<Map<String, dynamic>> get chat => Store.jsonList('chat');
+
+  static Future<void> send(String text) async {
+    final t = text.trim();
+    if (t.isEmpty) return;
+    final c = chat
+      ..add({
+        'id': '$deviceId-${DateTime.now().microsecondsSinceEpoch}',
+        't': DateTime.now().millisecondsSinceEpoch,
+        'from': _displayName,
+        'dev': deviceId,
+        'text': t.length > 500 ? t.substring(0, 500) : t,
+      });
+    await Store.setJsonList('chat', c.length > 300 ? c.sublist(c.length - 300) : c);
+    changes.value++;
+  }
+
+  static Future<void> _mergeChat(Object? incoming) async {
+    if (incoming is! List) return;
+    final c = chat;
+    final ids = {for (final m in c) m['id']};
+    var added = false;
+    for (final m in incoming) {
+      if (m is Map && m['id'] is String && !ids.contains(m['id'])) {
+        c.add(Map<String, dynamic>.from(m));
+        ids.add(m['id']);
+        added = true;
+      }
+    }
+    if (!added) return;
+    c.sort((a, b) => ((a['t'] as num?) ?? 0).compareTo((b['t'] as num?) ?? 0));
+    await Store.setJsonList('chat', c.length > 300 ? c.sublist(c.length - 300) : c);
+  }
 
   /// Datos recibidos de otros teléfonos: id -> snapshot.
   static Map<String, Map<String, dynamic>> get received {
@@ -96,6 +132,7 @@ class Community {
     };
     if (ip != null) peers[id] = (ip, '${d['name']}', DateTime.now().millisecondsSinceEpoch);
     await Store.setString('peer_data', jsonEncode(r));
+    await _mergeChat(d['chat']);
     changes.value++;
   }
 

@@ -327,9 +327,6 @@ class _ArticleScreenState extends State<ArticleScreen> {
           const SizedBox(height: 8),
           Text(tr('Lección ${i + 1} de ${list.length}', 'Lesson ${i + 1} of ${list.length}', 'Lição ${i + 1} de ${list.length}'), style: const TextStyle(color: Colors.grey)),
           Text(widget.article.title, style: TextStyle(fontSize: 24 * _scale, fontWeight: FontWeight.bold)),
-          if (isPt)
-            const Text('Lição em espanhol (tradução para o português em andamento).',
-                style: TextStyle(color: Colors.orange, fontSize: 12)),
           if (guide != null) ...[
             const SizedBox(height: 8),
             FilledButton.icon(

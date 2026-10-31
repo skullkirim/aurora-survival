@@ -27,6 +27,36 @@ class Power {
     resetIdle();
   }
 
+  static Future<void> keepScreenOn(bool on) async {
+    try {
+      await _ch.invokeMethod('keepScreenOn', {'on': on});
+    } catch (_) {}
+  }
+
+  /// ¿El sistema deja a la app sin restricciones de batería? (necesario para alarmas en MIUI).
+  static Future<bool> isIgnoringBattery() async {
+    try {
+      return await _ch.invokeMethod<bool>('isIgnoringBattery') ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  static Future<void> openBatterySettings() async {
+    try {
+      await _ch.invokeMethod('openBatterySettings');
+    } catch (_) {}
+  }
+
+  static Future<void> openAutostart() async {
+    try {
+      await _ch.invokeMethod('openAutostart');
+    } catch (_) {}
+  }
+
+  /// Brillo nativo directo (0–100) sin guardarlo como preferencia.
+  static Future<void> rawBrightness(int percent) => _setNativeBrightness(percent);
+
   static Future<void> setLowRefresh(bool on) async {
     await Store.setBool('pw_60hz', on);
     try {

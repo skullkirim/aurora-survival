@@ -19,7 +19,7 @@ import 'storage.dart';
 class TileStore {
   TileStore._();
   static const url = 'https://tile.openstreetmap.org';
-  static const userAgent = 'AuroraSurvival/1.6 (+https://github.com/skullkirim; Android app by PanLabStudios)';
+  static const userAgent = 'AuroraSurvival/1.7 (+https://github.com/skullkirim; Android app by PanLabStudios)';
   static Directory? _dir;
   static final _client = http.Client();
   static DateTime _offlineUntil = DateTime.fromMillisecondsSinceEpoch(0);

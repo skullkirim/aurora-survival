@@ -48,6 +48,7 @@ if ($xml -notmatch "RECEIVE_BOOT_COMPLETED") {
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 "@
     $xml = $xml -replace '(<uses-permission android:name="android.permission.INTERNET" />)', "`$1`n$extra"
 }
@@ -77,6 +78,13 @@ if ($g -notmatch "isCoreLibraryDesugaringEnabled") {
     $g = $g -replace 'compileOptions \{', "compileOptions {`n        isCoreLibraryDesugaringEnabled = true"
     $g = $g.TrimEnd() + "`n`ndependencies {`n    coreLibraryDesugaring(`"com.android.tools:desugar_jdk_libs:2.1.4`")`n}`n"
     [IO.File]::WriteAllText((Resolve-Path $bg), $g)
+}
+
+
+$xml = Get-Content $m -Raw
+if ($xml -notmatch "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS") {
+    $xml = $xml -replace '(<uses-permission android:name="android.permission.INTERNET" />)', "`$1`n    <uses-permission android:name=`"android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`" />"
+    Set-Content $m $xml -Encoding UTF8
 }
 
 # 3. Dependencias y verificación

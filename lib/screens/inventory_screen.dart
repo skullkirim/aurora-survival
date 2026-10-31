@@ -609,9 +609,156 @@ class _PeopleTabState extends State<PeopleTab> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     onTap: () => _edit(p),
+                    trailing: IconButton(
+                      tooltip: tr('Signos vitales', 'Vital signs', 'Sinais vitais'),
+                      icon: Icon(Icons.monitor_heart, color: (p['vitals'] as List?)?.isNotEmpty == true ? Colors.redAccent : Colors.grey),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => VitalsScreen(p, onSave: () => Store.setJsonList('people', _people))),
+                      ).then((_) => setState(() {})),
+                    ),
                   ),
               ],
             ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------
+// Signos vitales de una persona (historial)
+// ---------------------------------------------------------------------
+class VitalsScreen extends StatefulWidget {
+  final Map<String, dynamic> person;
+  final Future<void> Function() onSave;
+  const VitalsScreen(this.person, {required this.onSave, super.key});
+  @override
+  State<VitalsScreen> createState() => _VitalsScreenState();
+}
+
+class _VitalsScreenState extends State<VitalsScreen> {
+  final _pulse = TextEditingController();
+  final _resp = TextEditingController();
+  final _temp = TextEditingController();
+  final _bp = TextEditingController();
+  final _note = TextEditingController();
+  String _avpu = 'A';
+
+  List<Map<String, dynamic>> get _list =>
+      [for (final e in (widget.person['vitals'] as List? ?? const [])) if (e is Map) Map<String, dynamic>.from(e)];
+
+  String _avpuLabel(String k) => switch (k) {
+        'A' => tr('Alerta', 'Alert', 'Alerta'),
+        'V' => tr('Responde a la voz', 'Responds to voice', 'Responde à voz'),
+        'P' => tr('Solo al dolor', 'Only to pain', 'Só à dor'),
+        _ => tr('No responde', 'Unresponsive', 'Não responde'),
+      };
+
+  /// Valores fuera de lo normal en adultos (aviso simple).
+  List<String> _warnings(Map<String, dynamic> v) {
+    final w = <String>[];
+    final p = num.tryParse('${v['pulse'] ?? ''}');
+    final r = num.tryParse('${v['resp'] ?? ''}');
+    final t = num.tryParse('${v['temp'] ?? ''}'.replaceAll(',', '.'));
+    if (p != null && (p < 50 || p > 120)) w.add(tr('pulso', 'pulse', 'pulso'));
+    if (r != null && (r < 10 || r > 28)) w.add(tr('respiración', 'breathing', 'respiração'));
+    if (t != null && (t < 35 || t >= 38.5)) w.add(tr('temperatura', 'temperature', 'temperatura'));
+    if (v['avpu'] != null && v['avpu'] != 'A') w.add(tr('conciencia', 'consciousness', 'consciência'));
+    return w;
+  }
+
+  Future<void> _add() async {
+    final v = <String, dynamic>{
+      't': DateTime.now().millisecondsSinceEpoch,
+      'pulse': _pulse.text.trim(),
+      'resp': _resp.text.trim(),
+      'temp': _temp.text.trim(),
+      'bp': _bp.text.trim(),
+      'avpu': _avpu,
+      'note': _note.text.trim(),
+    };
+    final list = _list..insert(0, v);
+    widget.person['vitals'] = list.take(100).toList();
+    widget.person['upd'] = DateTime.now().millisecondsSinceEpoch;
+    await widget.onSave();
+    for (final c in [_pulse, _resp, _temp, _bp, _note]) {
+      c.clear();
+    }
+    setState(() => _avpu = 'A');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    Widget field(TextEditingController c, String label, {bool number = true}) => Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: TextField(
+              controller: c,
+              keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+              decoration: InputDecoration(labelText: label, isDense: true),
+            ),
+          ),
+        );
+    String two(int n) => n.toString().padLeft(2, '0');
+    return Scaffold(
+      appBar: AppBar(title: Text(tr('Signos de ${widget.person['name']}', 'Vitals: ${widget.person['name']}', 'Sinais de ${widget.person['name']}'))),
+      body: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Row(children: [
+            field(_pulse, tr('Pulso /min', 'Pulse /min', 'Pulso /min')),
+            field(_resp, tr('Respiración /min', 'Breaths /min', 'Respiração /min')),
+          ]),
+          Row(children: [
+            field(_temp, tr('Temperatura °C', 'Temperature °C', 'Temperatura °C')),
+            field(_bp, tr('Presión (ej. 120/80)', 'Blood pressure (e.g. 120/80)', 'Pressão (ex. 120/80)'), number: false),
+          ]),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, children: [
+            for (final k in ['A', 'V', 'P', 'U'])
+              ChoiceChip(label: Text(_avpuLabel(k)), selected: _avpu == k, onSelected: (_) => setState(() => _avpu = k)),
+          ]),
+          Padding(
+            padding: const EdgeInsets.all(4),
+            child: TextField(
+                controller: _note,
+                decoration: InputDecoration(labelText: tr('Nota (dolor, sangrado, medicina dada...)', 'Note (pain, bleeding, medicine given...)',
+                    'Nota (dor, sangramento, remédio dado...)'))),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(onPressed: _add, icon: const Icon(Icons.add), label: Text(tr('Registrar ahora', 'Record now', 'Registrar agora'))),
+          const SizedBox(height: 8),
+          Text(
+              tr('Adulto en reposo: pulso 60–100, respiración 12–20, temperatura 36–37,5 °C. Anota cada 15–30 min si está herido: lo que importa es si mejora o empeora.',
+                  'Adult at rest: pulse 60–100, breathing 12–20, temperature 36–37.5 °C. Record every 15–30 min if injured: what matters is whether it gets better or worse.',
+                  'Adulto em repouso: pulso 60–100, respiração 12–20, temperatura 36–37,5 °C. Anote a cada 15–30 min se estiver ferido: o que importa é se melhora ou piora.'),
+              style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          const Divider(height: 24),
+          Text(tr('Historial', 'History', 'Histórico'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: cs.primary)),
+          if (_list.isEmpty) Text(tr('Sin registros.', 'No records.', 'Sem registros.'), style: const TextStyle(color: Colors.grey)),
+          for (final v in _list)
+            Builder(builder: (_) {
+              final d = DateTime.fromMillisecondsSinceEpoch(v['t'] as int);
+              final w = _warnings(v);
+              return ListTile(
+                dense: true,
+                leading: Icon(w.isEmpty ? Icons.check_circle_outline : Icons.warning_amber, color: w.isEmpty ? Colors.green : Colors.orange),
+                title: Text([
+                  if ('${v['pulse']}'.isNotEmpty) '♥ ${v['pulse']}',
+                  if ('${v['resp']}'.isNotEmpty) '🫁 ${v['resp']}',
+                  if ('${v['temp']}'.isNotEmpty) '🌡 ${v['temp']}°',
+                  if ('${v['bp']}'.isNotEmpty) '🩸 ${v['bp']}',
+                  _avpuLabel('${v['avpu'] ?? 'A'}'),
+                ].join('  ')),
+                subtitle: Text([
+                  '${two(d.day)}/${two(d.month)} ${two(d.hour)}:${two(d.minute)}',
+                  if (w.isNotEmpty) tr('revisar: ${w.join(', ')}', 'check: ${w.join(', ')}', 'verificar: ${w.join(', ')}'),
+                  if ('${v['note'] ?? ''}'.isNotEmpty) '${v['note']}',
+                ].join(' · ')),
+              );
+            }),
+        ],
+      ),
     );
   }
 }

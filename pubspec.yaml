@@ -1,7 +1,7 @@
 name: apoca
 description: "AURORA - Manual de supervivencia offline / Offline survival guide. PanLabStudios."
 publish_to: 'none'
-version: 1.6.0+6
+version: 1.7.0+7
 
 environment:
   sdk: ^3.6.0

@@ -105,20 +105,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text(tr('Modo comunidad', 'Community mode', 'Modo comunidade')),
-          bottom: TabBar(tabs: [
+          bottom: TabBar(isScrollable: true, tabAlignment: TabAlignment.start, tabs: [
             Tab(icon: const Icon(Icons.wifi_tethering), text: tr('Conexión', 'Connection', 'Conexão')),
             Tab(icon: const Icon(Icons.inventory_2_outlined), text: tr('Provisiones', 'Supplies')),
             Tab(icon: const Icon(Icons.groups_outlined), text: tr('Personas', 'People', 'Pessoas')),
+            Tab(icon: const Icon(Icons.chat_outlined), text: tr('Mensajes', 'Messages', 'Mensagens')),
           ]),
         ),
         body: TabBarView(children: [
           _connection(),
           _GroupSupplies(),
           _GroupPeople(),
+          const _Chat(),
         ]),
       ),
     );
@@ -369,5 +371,107 @@ class _GroupPeople extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+/// Mensajes de texto entre teléfonos del grupo (sin internet).
+class _Chat extends StatefulWidget {
+  const _Chat();
+  @override
+  State<_Chat> createState() => _ChatState();
+}
+
+class _ChatState extends State<_Chat> {
+  final _c = TextEditingController();
+
+  void _changed() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Community.changes.addListener(_changed);
+  }
+
+  @override
+  void dispose() {
+    Community.changes.removeListener(_changed);
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final t = _c.text;
+    _c.clear();
+    await Community.send(t);
+    setState(() {});
+    Community.syncAll();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final msgs = Community.chat.reversed.toList();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return Column(children: [
+      Expanded(
+        child: msgs.isEmpty
+            ? Center(
+                child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                    tr('Escribe un mensaje: llega a todos los teléfonos del grupo cuando se sincronicen (unos 30 s).',
+                        'Write a message: it reaches every phone in the group when they sync (about 30 s).',
+                        'Escreva uma mensagem: chega a todos os telefones do grupo quando sincronizarem (uns 30 s).'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey)),
+              ))
+            : ListView.builder(
+                reverse: true,
+                padding: const EdgeInsets.all(8),
+                itemCount: msgs.length,
+                itemBuilder: (_, i) {
+                  final m = msgs[i];
+                  final mine = m['dev'] == Community.deviceId;
+                  final d = DateTime.fromMillisecondsSinceEpoch((m['t'] as num?)?.toInt() ?? 0);
+                  return Align(
+                    alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 300),
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: mine ? cs.primary.withValues(alpha: 0.25) : const Color(0xFF1C1C1C),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('${m['from']} · ${two(d.hour)}:${two(d.minute)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text('${m['text']}', style: const TextStyle(fontSize: 15)),
+                      ]),
+                    ),
+                  );
+                },
+              ),
+      ),
+      SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _c,
+                maxLength: 500,
+                minLines: 1,
+                maxLines: 3,
+                decoration: InputDecoration(hintText: tr('Mensaje al grupo', 'Message to the group', 'Mensagem ao grupo'), counterText: ''),
+                onSubmitted: (_) => _send(),
+              ),
+            ),
+            IconButton(icon: const Icon(Icons.send), onPressed: _send),
+          ]),
+        ),
+      ),
+    ]);
   }
 }
