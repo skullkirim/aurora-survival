@@ -50,7 +50,8 @@ class _Pbf {
       case 1:
         pos += 8;
       case 2:
-        pos += varint();
+        final l = varint(); // leer primero la longitud: pos cambia al leerla
+        pos += l;
       case 5:
         pos += 4;
       default:
@@ -66,7 +67,8 @@ class _Pbf {
   }
 
   List<int> packed() {
-    final e = pos + varint();
+    final l = varint();
+    final e = pos + l;
     final out = <int>[];
     while (pos < e) {
       out.add(varint());

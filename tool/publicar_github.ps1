@@ -54,13 +54,15 @@ if ($apks.Count -gt 0) {
 ## AURORA $ver
 Descarga **AURORA-$ver-arm64-v8a.apk** (sirve para casi todos los teléfonos de los últimos años). Si no instala, prueba armeabi-v7a (teléfonos viejos).
 
-Instalar: abre el APK y permite "orígenes desconocidos". Funciona sin internet.
+Instalar: abre el APK y permite orígenes desconocidos. Funciona sin internet.
 
 Novedades: baliza SOS automática, signos vitales por persona, mensajes entre teléfonos en Modo comunidad, aviso para que las alarmas no se pierdan en Xiaomi/Redmi, temas de higiene/botiquín casero y autoprotección, más recetas.
 "@
     gh release view "v$ver" --repo "$user/$Repo" 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        gh release create "v$ver" @apks --repo "$user/$Repo" --title "AURORA $ver" --notes $notes --latest
+        $nf = Join-Path $env:TEMP "aurora_notes.md"
+        [IO.File]::WriteAllText($nf, $notes, (New-Object System.Text.UTF8Encoding $false))
+        gh release create "v$ver" @apks --repo "$user/$Repo" --title "AURORA $ver" --notes-file $nf --latest
     } else {
         gh release upload "v$ver" @apks --repo "$user/$Repo" --clobber
     }
