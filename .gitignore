@@ -1,0 +1,39 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml
+.idea/
+.vscode/
+
+# Android generado (se crea con setup.ps1)
+android/.gradle/
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+*.jks
+*.keystore
+key.properties
+
+# Mapas grandes y temporales
+mapas/
+_to_delete/
+*.tgz
+*.zip
+
+# Varios
+*.class
+*.log
+*.pyc
+.DS_Store
+.history
+migrate_working_dir/
+**/doc/api/
+
+android/.kotlin/
+android/build/
+android/app/build/
+android/app/.cxx/
